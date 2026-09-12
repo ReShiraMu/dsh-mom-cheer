@@ -1,11 +1,12 @@
 {
   "name": "dsh-mom-cheer",
-  "version": "0.1.0",
-  "description": "Injects one fixed line (default '妈妈加油') into the start of every conversation as a durable plugin-sourced user message.",
+  "version": "0.1.1",
+  "description": "Injects one fixed line (default '妈妈加油') at the start of every conversation turn after the first, as a durable plugin-sourced user message.",
   "type": "module",
   "main": "index.js",
   "exports": {
     ".": "./index.js",
+    "./test-driver": "./test/two-turn-driver.js",
     "./package.json": "./package.json"
   },
   "files": [

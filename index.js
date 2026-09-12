@@ -1,6 +1,6 @@
 /**
  * dsh-mom-cheer — injects one fixed line (default "妈妈加油") at the start of
- * every conversation.
+ * every conversation turn, except the first.
  *
  * Mechanism follows the stock time-context plugin: an `agent/pre-step`
  * waterfall listener appends a durable, plugin-sourced user message right
@@ -8,12 +8,15 @@
  * written to the session log, so it persists, replays, and compacts like
  * ordinary conversation content.
  *
+ * Turn 1 is skipped by default: the first request's structure anchors the
+ * whole conversation's policy trajectory, so the line only appears from the
+ * second turn on. Turn numbering is restored from the `turnBoundary` session
+ * projection, so a resumed session keeps its original numbering.
+ *
  * Config (cordis.patch.yml):
- *   text: string          — injected line, default "妈妈加油"
- *   everyTurn: boolean    — true: inject at every turn's first step;
- *                           false (default): only on turn 1, i.e. the start of
- *                           each new conversation (turn numbering survives
- *                           resume via the turnBoundary projection)
+ *   text: string              — injected line, default "妈妈加油"
+ *   includeFirstTurn: boolean — true: also inject on turn 1; false (default):
+ *                               inject only on turns >= 2
  */
 
 import { randomUUID } from 'node:crypto'
@@ -36,12 +39,12 @@ export function apply(ctx, config = {}) {
   const text = typeof config.text === 'string' && config.text.length > 0
     ? config.text
     : '妈妈加油'
-  const everyTurn = config.everyTurn === true
+  const includeFirstTurn = config.includeFirstTurn === true
 
   ctx.on('agent/pre-step', async ({ turn, step, signal }, next) => {
     const decision = await next()
     if (decision.kind === 'reject' || signal.aborted) return decision
-    if (step !== 1 || (!everyTurn && turn !== 1)) return decision
+    if (step !== 1 || (!includeFirstTurn && turn === 1)) return decision
     return {
       ...decision,
       messages: [

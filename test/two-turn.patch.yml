@@ -1,0 +1,7 @@
+# Dev patch: replace the one-shot headless runner with the two-turn driver
+# (sends two user messages in one session to exercise turn gating).
+- id: headless-runner
+  disabled: true
+- insert:
+    - id: two-turn-driver
+      name: dsh-mom-cheer/test-driver

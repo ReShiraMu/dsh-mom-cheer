@@ -42,14 +42,15 @@ New-Item -ItemType Directory -Force $assets | Out-Null
 
 $prompt = '#7aa2f7'; $dim = '#6b7089'; $text = '#c8cede'; $accent = '#9ece6a'; $json = '#bb9af7'
 
-New-TerminalShot -OutFile (Join-Path $assets 'headless-demo.png') -Title 'dsh --profile headless' -Lines @(
-    @{ Text = 'PS> dsh --profile headless "只回复两个字：收到"'; Color = $prompt },
+New-TerminalShot -OutFile (Join-Path $assets 'headless-demo.png') -Title 'dsh --profile headless --patch test/two-turn.patch.yml' -Lines @(
+    @{ Text = 'PS> dsh --profile headless --patch test/two-turn.patch.yml "x"'; Color = $prompt },
     @{ Text = ''; Color = $text },
-    @{ Text = 'dsh: reasoning:'; Color = $dim },
-    @{ Text = 'The user''s last message is "妈妈加油" which means "Mom, keep going!" or "Come on, Mom!"'; Color = $dim },
-    @{ Text = 'But the previous instruction was to reply with only two characters, "收到" (received).'; Color = $dim },
+    @{ Text = 'two-turn-driver: injections:'; Color = $text },
+    @{ Text = 'plugin=@deepseek-ai/dsh-system-prompt turn=1 seq=9  text="Current runtime context. ..."'; Color = $dim },
+    @{ Text = 'plugin=mom-cheer                   turn=2 seq=23 text="妈妈加油"'; Color = $accent },
     @{ Text = ''; Color = $text },
-    @{ Text = '收到'; Color = $accent }
+    @{ Text = '# turn 1: no injection (first request anchors the conversation)'; Color = $dim },
+    @{ Text = '# turn 2: injected at the start of the turn, after the user message'; Color = $dim }
 )
 
 New-TerminalShot -OutFile (Join-Path $assets 'session-event.png') -Title 'session.v3.jsonl — user/message event (seq 11)' -Lines @(
