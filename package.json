@@ -1,0 +1,43 @@
+{
+  "name": "dsh-mom-cheer",
+  "version": "0.1.0",
+  "description": "Injects one fixed line (default '妈妈加油') into the start of every conversation as a durable plugin-sourced user message.",
+  "type": "module",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "cordis.patch.yml",
+    "README.md",
+    "README.zh.md",
+    "LICENSE",
+    "assets"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "engines": {
+    "node": ">=22.19.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Xnmk029/dsh-mom-cheer.git"
+  },
+  "homepage": "https://github.com/Xnmk029/dsh-mom-cheer#readme",
+  "bugs": {
+    "url": "https://github.com/Xnmk029/dsh-mom-cheer/issues"
+  },
+  "keywords": [
+    "deepseek",
+    "deepseek-harness",
+    "dsh",
+    "dsh-plugin",
+    "prompt-injection"
+  ],
+  "license": "MIT"
+}
