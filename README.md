@@ -20,11 +20,37 @@ The session log records the injection as a regular `user/message` event:
 
 ## Install
 
+### 1. Preset mode (recommended: opt-in per session)
+
+Compose mom into an **agent preset**: only sessions that select that preset get the injection; every other session and the global profile are untouched.
+
+Append one row to your preset's `agent.cordis.yml` (e.g. in `~/.dsh/.agent-presets/mom/`, usually started from a copy of a built-in preset):
+
+```yaml
+- id: mom-cheer
+  name: 'dsh-mom-cheer'        # bare package name when the preset can resolve it; use a file path for standalone checkouts
+  config:
+    text: '妈妈加油'
+```
+
+A preset's bare package names resolve by the Node walk up from the harness's `node_modules`; if `dsh-mom-cheer` is not there (e.g. it is only a `link:` dependency of a profile, or a standalone directory), point the row at the plugin's entry file:
+
+```yaml
+- id: mom-cheer
+  name: 'G:/DeepSeek Harness/dsh-mom-cheer/index.js'
+  config:
+    text: '妈妈加油'
+```
+
+Preset rows may carry `config:` — the package's own `dsh.bundle.patch` ships no config, so the two paths never conflict. A new preset shows up in the picker immediately (discovery re-reads on every call; no restart needed).
+
+### 2. Profile bundle (every session of that profile)
+
 ```bash
 dsh plugin --profile web add <path-to-this-directory>
 ```
 
-The package declares `dsh.bundle.patch`, so it joins the profile's bundle layer stack automatically on install. It also works with runtime injectors such as `dsh-super-injector` (`dev_inject_plugin <dir>`) without a restart.
+The package declares `dsh.bundle.patch`, so it joins the profile's bundle layer stack automatically on install — and injects into **every** session of that profile. If you only want opt-in injection, use preset mode instead of this path. It also works with runtime injectors such as `dsh-super-injector` (`dev_inject_plugin <dir>`) without a restart.
 
 ## Configuration
 
@@ -47,6 +73,12 @@ Configure through the profile's `cordis.patch.yml`:
 ```bash
 dsh plugin --profile web remove dsh-mom-cheer
 ```
+
+In preset mode, delete the `mom-cheer` row from the preset's `agent.cordis.yml` (takes effect for sessions started afterwards).
+
+## Verify
+
+When active, the injection shows up in the session log / message stream as an ordinary `user/message` event attributed to `source.plugin: 'mom-cheer'` (the web GUI renders it as a plugin-attributed user message). Visible from turn 2 onward is the expected behavior; in preset mode it only appears in sessions that selected that preset.
 
 ## Compatibility
 
