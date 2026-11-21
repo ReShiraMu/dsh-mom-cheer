@@ -25,12 +25,12 @@ function report(agent) {
     if (event?.type === 'turn/start') turn = event.data.turn
     if (event?.type !== 'user/message') continue
     const source = event.data?.source
-    if (source?.kind !== 'plugin') continue
+    if (!source?.kind?.startsWith(('plugin')) continue
     const text = event.data.content
       ?.filter((block) => block.type === 'text')
       .map((block) => block.text)
       .join('')
-    lines.push(`plugin=${source.plugin} turn=${turn} seq=${seq} text=${JSON.stringify(text)}`)
+    lines.push(`kind=${source.kind} turn=${turn} seq=${seq} text=${JSON.stringify(text)}`)
   }
   process.stdout.write(lines.length === 0 ? 'two-turn-driver: no plugin injections\n' : `two-turn-driver: injections:\n${lines.join('\n')}\n`)
 }
