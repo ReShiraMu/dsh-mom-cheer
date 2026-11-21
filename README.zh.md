@@ -2,17 +2,39 @@
 
 [English](README.md) | 中文
 
+> 这是 [Xnmk029/dsh-mom-cheer](https://github.com/Xnmk029/dsh-mom-cheer) 的个人 fork。
+> 主要改动：适配 DeepSeek Harness 0.2.x 的会话格式 v4，详见[本 fork 的改动](#本-fork-的改动)。
+
 一个极简的 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 提示词注入插件：在每轮对话开头注入一句固定文本——默认「妈妈加油」，首轮除外——以持久的、插件署名的 user 消息形式进入会话。
+
+## 快速开始
+
+```bash
+dsh plugin --profile web add https://github.com/ReShiraMu/dsh-mom-cheer
+# 装完重启引擎：从第 2 回合起，每轮开头会多一条「妈妈加油」
+```
 
 ## 工作原理
 
-插件注册 `agent/pre-step` waterfall 监听器（与官方 `time-context` 包相同的机制）。从第二回合起，在每回合的第一步把一条 `source: { kind: 'plugin', plugin: 'mom-cheer' }` 的 user 消息追加在用户消息之后——即模型应答前的近距离位置。
+插件注册 `agent/pre-step` waterfall 监听器（与官方 `time-context` 包相同的机制）。从第二回合起，在每回合的第一步把一条 user 消息追加在用户消息之后——即模型应答前的近距离位置：
+
+```js
+source: {
+  kind: 'plugin:mom-cheer',
+  form: 'snapshot',
+  sections: [{ name: 'mom-cheer', text: '妈妈加油' }],
+}
+```
+
+harness 0.2.x 起会话格式升级到 v4，`source.kind` 必须是生产者自有的 kind。旧的 `{ kind: 'plugin', plugin: '...' }` 包装会被拒绝（`format v4 message requires a producer-owned source kind`）；`plugin:<name>` 正是官方 v3→v4 迁移对第三方插件的映射结果。
 
 首轮默认跳过：首个请求的结构会锚定整条会话的策略轨迹，因此该句从第二回合才开始出现。注入消息作为普通会话内容写入 session 日志：resume 后仍在、可回放、参与 compaction。回合编号由 `turnBoundary` 会话投影恢复，resume 的会话沿用原编号。
 
-在真实 `headless` 启动上用双回合驱动实测（dsh 0.1.5-rc.2）：首轮不注入，「妈妈加油」在第二回合开头注入。
+在真实 `headless` 启动上用双回合驱动实测（上游为 dsh 0.1.5-rc.2）：首轮不注入，「妈妈加油」在第二回合开头注入。本 fork 在 dsh 0.2.2-rc.1 上验证：会话日志中出现 `source.kind: 'plugin:mom-cheer'` 的 `user/message` 事件。
 
 ![双回合实测](assets/headless-demo.png)
+
+*（截图来自上游 0.1.5-rc.2 实测）*
 
 session 日志中，注入呈现为一条普通的 `user/message` 事件：
 
@@ -50,7 +72,13 @@ session 日志中，注入呈现为一条普通的 `user/message` 事件：
 dsh plugin --profile web add <本目录路径>
 ```
 
-包声明了 `dsh.bundle.patch`，安装时自动加入 profile 的 bundle 层栈——该 profile 的**所有**会话都会注入。只想要按需注入时请改用预设模式，避免这条路径。也可通过 `dsh-super-injector` 运行时注入（`dev_inject_plugin <目录>`），免重启生效。
+或者直接装本 fork：
+
+```bash
+dsh plugin --profile web add https://github.com/ReShiraMu/dsh-mom-cheer
+```
+
+包声明了 `dsh.bundle.patch`，安装时自动加入 profile 的 bundle 层栈——该 profile 的**所有**会话都会注入。**装完需要重启引擎才生效**（0.2.x 在引擎启动时加载插件）。只想要按需注入时请改用预设模式，避免这条路径。也可通过 `dsh-super-injector` 运行时注入（`dev_inject_plugin <目录>`），免重启生效。
 
 ## 配置
 
@@ -78,14 +106,21 @@ dsh plugin --profile web remove dsh-mom-cheer
 
 ## 验证
 
-注入生效时，会话日志 / 消息流里会出现一条带 `source.plugin: 'mom-cheer'` 署名的普通 `user/message` 事件（Web GUI 里显示为插件署名的 user 消息）。从第二回合起可见即为正常；预设模式只在选中该预设的会话里出现。
+注入生效时，会话日志 / 消息流里会出现一条 `source.kind: 'plugin:mom-cheer'` 的普通 `user/message` 事件（Web GUI 里显示为插件署名的 user 消息）。从第二回合起可见即为正常；预设模式只在选中该预设的会话里出现。
 
 ## 兼容性
 
-- DeepSeek Harness `>= 0.1.x`（在 `0.1.5-rc.2` 上开发并实测）
+- DeepSeek Harness `>= 0.2.0`（在 `0.2.2-rc.1` 上实测）
 - Node `>= 22.19`
 - 零运行时依赖
+- **与 0.1.x 不兼容**：旧格式的 `kind: 'plugin'` 已废弃
+
+## 本 fork 的改动
+
+- `0.1.2`：`source.kind` 由 `'plugin'` 改为 `` `plugin:${name}` ``，以适配 harness 0.2.x 的会话格式 v4（旧写法会被拒绝）。
+- `package.json` 的 `repository` / `homepage` / `bugs` 指向本 fork。
+- 上游未改动的部分保持原样，机制与配置项不变。
 
 ## 许可证
 
-[MIT](LICENSE)
+[MIT](LICENSE) · 源自 [Xnmk029/dsh-mom-cheer](https://github.com/Xnmk029/dsh-mom-cheer)

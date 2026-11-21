@@ -2,17 +2,39 @@
 
 English | [中文](README.zh.md)
 
+> A personal fork of [Xnmk029/dsh-mom-cheer](https://github.com/Xnmk029/dsh-mom-cheer).
+> Main change: adapted to DeepSeek Harness 0.2.x session format v4 — see [Changes in this fork](#changes-in-this-fork).
+
 A minimal prompt-injection plugin for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness): injects one fixed line — `妈妈加油` by default — at the start of every conversation turn after the first, as a durable plugin-attributed user message.
+
+## Quick start
+
+```bash
+dsh plugin --profile web add https://github.com/ReShiraMu/dsh-mom-cheer
+# Restart the engine. From turn 2 on, every turn opens with 妈妈加油.
+```
 
 ## How it works
 
-The plugin registers an `agent/pre-step` waterfall listener (the same mechanism the stock `time-context` package uses). On the first step of every turn from turn 2 on, it appends a user-role message carrying `source: { kind: 'plugin', plugin: 'mom-cheer' }` right after the user's own message — the close-distance position, immediately before the model responds.
+The plugin registers an `agent/pre-step` waterfall listener (the same mechanism the stock `time-context` package uses). On the first step of every turn from turn 2 on, it appends a user-role message right after the user's own message — the close-distance position, immediately before the model responds:
+
+```js
+source: {
+  kind: 'plugin:mom-cheer',
+  form: 'snapshot',
+  sections: [{ name: 'mom-cheer', text: '妈妈加油' }],
+}
+```
+
+Since harness 0.2.x the session format is v4, where `source.kind` must be a producer-owned kind. The old `{ kind: 'plugin', plugin: '...' }` wrapper is refused (`format v4 message requires a producer-owned source kind`); `plugin:<name>` is exactly what the official v3→v4 migration maps an out-of-tree plugin to.
 
 Turn 1 is skipped by default: the first request's structure anchors the whole conversation's policy trajectory, so the line only appears from the second turn on. The message is written to the session log like ordinary conversation content: it persists across resume, replays, and participates in compaction. Turn numbering is restored from the `turnBoundary` session projection, so a resumed session keeps its original numbering.
 
-Verified end-to-end with a two-turn driver on a real `headless` boot (dsh 0.1.5-rc.2): nothing is injected on turn 1, and `妈妈加油` lands at the start of turn 2.
+Verified end-to-end with a two-turn driver on a real `headless` boot — upstream on dsh 0.1.5-rc.2. This fork is verified on dsh 0.2.2-rc.1: the session log shows a `user/message` event with `source.kind: 'plugin:mom-cheer'`.
 
 ![Two-turn verification](assets/headless-demo.png)
+
+*(screenshot from the upstream 0.1.5-rc.2 run)*
 
 The session log records the injection as a regular `user/message` event:
 
@@ -50,7 +72,13 @@ Preset rows may carry `config:` — the package's own `dsh.bundle.patch` ships n
 dsh plugin --profile web add <path-to-this-directory>
 ```
 
-The package declares `dsh.bundle.patch`, so it joins the profile's bundle layer stack automatically on install — and injects into **every** session of that profile. If you only want opt-in injection, use preset mode instead of this path. It also works with runtime injectors such as `dsh-super-injector` (`dev_inject_plugin <dir>`) without a restart.
+Or install this fork straight from GitHub:
+
+```bash
+dsh plugin --profile web add https://github.com/ReShiraMu/dsh-mom-cheer
+```
+
+The package declares `dsh.bundle.patch`, so it joins the profile's bundle layer stack automatically on install — and injects into **every** session of that profile. **Restart the engine after installing**: on 0.2.x plugins are loaded at engine start. If you only want opt-in injection, use preset mode instead of this path. It also works with runtime injectors such as `dsh-super-injector` (`dev_inject_plugin <dir>`) without a restart.
 
 ## Configuration
 
@@ -78,14 +106,21 @@ In preset mode, delete the `mom-cheer` row from the preset's `agent.cordis.yml` 
 
 ## Verify
 
-When active, the injection shows up in the session log / message stream as an ordinary `user/message` event attributed to `source.plugin: 'mom-cheer'` (the web GUI renders it as a plugin-attributed user message). Visible from turn 2 onward is the expected behavior; in preset mode it only appears in sessions that selected that preset.
+When active, the injection shows up in the session log / message stream as an ordinary `user/message` event with `source.kind: 'plugin:mom-cheer'` (the web GUI renders it as a plugin-attributed user message). Visible from turn 2 onward is the expected behavior; in preset mode it only appears in sessions that selected that preset.
 
 ## Compatibility
 
-- DeepSeek Harness `>= 0.1.x` (developed and verified on `0.1.5-rc.2`)
+- DeepSeek Harness `>= 0.2.0` (verified on `0.2.2-rc.1`)
 - Node `>= 22.19`
 - No runtime dependencies
+- **Not compatible with 0.1.x**: the old `kind: 'plugin'` source format is retired
+
+## Changes in this fork
+
+- `0.1.2`: `source.kind` changed from `'plugin'` to `` `plugin:${name}` `` to match the harness 0.2.x session format v4 (the old wrapper is refused).
+- `package.json` `repository` / `homepage` / `bugs` point at this fork.
+- Everything else is unchanged from upstream; mechanism and configuration are identical.
 
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE) · forked from [Xnmk029/dsh-mom-cheer](https://github.com/Xnmk029/dsh-mom-cheer)
