@@ -1,6 +1,6 @@
 {
   "name": "dsh-mom-cheer",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Injects one fixed line (default '妈妈加油') at the start of every conversation turn after the first, as a durable plugin-sourced user message.",
   "type": "module",
   "main": "index.js",
@@ -27,11 +27,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Xnmk029/dsh-mom-cheer.git"
+    "url": "git+https://github.com/ReShiraMu/dsh-mom-cheer.git"
   },
-  "homepage": "https://github.com/Xnmk029/dsh-mom-cheer#readme",
+  "homepage": "https://github.com/ReShiraMu/dsh-mom-cheer#readme",
   "bugs": {
-    "url": "https://github.com/Xnmk029/dsh-mom-cheer/issues"
+    "url": "https://github.com/ReShiraMu/dsh-mom-cheer/issues"
   },
   "keywords": [
     "deepseek",
